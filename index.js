@@ -11,36 +11,37 @@ const fsPromises = fs.promises;
 
 
 (async () => {
-  
-  const browser = await puppeteer.launch()
-  const page = await browser.newPage()  
+
+  const browser = await puppeteer.launch({headless:false,defaultViewport:{width:1024,height:768}})
+  const page = await browser.newPage()
   await page.goto('https://www.azlyrics.com/g/gracejones.html')
-  const link = await page.$$eval(".listalbum-item a",anchors =>  anchors.map(
-item=>item.href
+  const links = await page.$$eval(".listalbum-item a", anchors => anchors.map(
+    item => item.href
 
 
   ))
-//console.log(link);
-for (let n = 0; n < 2; n++) {
-  const element = link[n];
-  await page.goto(link[n])
-  let songTitle = await page.$eval(".main-page > div.row > div:nth-child(2) div:nth-of-type(4)+b", el => el.innerText)
-  songTitle=songTitle.split(" ").join("_");
-const lyrics = await page.$eval(".main-page > div.row > div:nth-child(2) div:nth-of-type(5)", el => el.innerText)
 
-// WRITE SONG TO TXT FILE
-  fs.writeFile(`songs/${songTitle}.txt`, lyrics, (err) => {
-  // throws an error, you could also catch it here
-  if (err) throw err;
+  for (let n = 99; n < links.length; n++) {
+    const element = links[n];
+    await page.goto(links[n]);
+    console.log(links[n]);
+    let songTitle = await page.$eval(".main-page > div.row > div:nth-child(2) div:nth-of-type(4)+b", el => el.innerText)
+    songTitle = songTitle.split(" ").join("_");
+    const lyrics = await page.$eval(".main-page > div.row > div:nth-child(2) div:nth-of-type(5)", el => el.innerText)
 
-  // success case, the file was saved
-  console.log('Lyric saved!');
+    // WRITE SONG TO TXT FILE
+    fs.writeFile(`songs/${songTitle}.txt`, lyrics, (err) => {
+      // throws an error, you could also catch it here
+      if (err) throw err;
 
-});
-}
+      // success case, the file was saved
+      console.log('Lyric saved!');
 
-  
-  
+    });
+  }
+
+
+
 
   await browser.close()
 })()
